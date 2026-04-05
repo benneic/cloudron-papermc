@@ -32,6 +32,12 @@
     "oidc": {
       "loginRedirectUri": "/auth/callback",
       "logoutRedirectUri": "/"
+    },
+    "scheduler": {
+      "papermc_auto_update": {
+        "schedule": "0 */6 * * *",
+        "command": "/app/code/scripts/auto-update.sh >> /app/data/papermc-update.log 2>&1"
+      }
     }
   },
   "manifestVersion": 2,

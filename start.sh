@@ -65,16 +65,6 @@ echo "=> Container RAM: ${ram_mb}MB, Java heap: ${java_mb}MB"
 export JAVA_OPTS="-Xms${java_mb}M -Xmx${java_mb}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200"
 
 # ============================================================
-# Set up cron for auto-updates (every 6 hours)
-# ============================================================
-CRON_FILE="/etc/cron.d/papermc-update"
-cat > "${CRON_FILE}" <<'CRON'
-0 */6 * * * root /app/code/scripts/auto-update.sh >> /tmp/papermc-update.log 2>&1
-CRON
-chmod 644 "${CRON_FILE}"
-service cron start || true
-
-# ============================================================
 # Write server port into server.properties if MINECRAFT_PORT is set
 # ============================================================
 if [ -n "${MINECRAFT_PORT:-}" ]; then

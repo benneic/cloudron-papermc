@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "skills": {
+    "cloudron-app-packaging": {
+      "source": "docs/skills",
+      "sourceType": "git",
+      "computedHash": "dcf427a98bcf9f03532c9fbbae1cc4750fbeadf72f948a6412293108d335f9f4"
+    },
+    "cloudron-app-publishing": {
+      "source": "docs/skills",
+      "sourceType": "git",
+      "computedHash": "1beebc118d9eefd6b7dbc647a0394be64091aef108082073670cefd40bc8c872"
+    },
+    "cloudron-server-ops": {
+      "source": "docs/skills",
+      "sourceType": "git",
+      "computedHash": "72eed6076533719932f289b443d435f9041243e5c7516dbfd901326875bfad71"
+    }
+  }
+}

@@ -55,14 +55,14 @@ After installation, server files can be edited via the **Cloudron File Manager**
 
 ## Auto-Updates
 
-A cron job runs every 6 hours to check for new PaperMC builds via the Fill v3 API. When a new stable build is found:
+The Cloudron **scheduler** addon (declared in the app manifest) runs [`scripts/auto-update.sh`](scripts/auto-update.sh) every 6 hours to check for new PaperMC builds via the Fill v3 API. When a new stable build is found:
 
 1. The new jar is downloaded
 2. The Minecraft server is gracefully stopped
 3. The jar is swapped
 4. The server restarts automatically
 
-Update logs are available at `/tmp/papermc-update.log`.
+Output is appended to `/app/data/papermc-update.log` and also appears in the app’s Cloudron logs.
 
 ## Architecture
 

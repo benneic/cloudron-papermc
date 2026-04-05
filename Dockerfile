@@ -1,4 +1,4 @@
-FROM cloudron/base:5.0.0@sha256:04fd70dbd8ad6149c19de39e35718e024417c3e01949ce4c9e3d15cdb2ef7322
+FROM cloudron/base:5.0.0@sha256:04fd70dbd8ad6149c19de39e35718e024417c3e01dc9c6637eaf4a41ec4e596c
 
 # Install Java 21 and jq
 RUN apt-get update && \
