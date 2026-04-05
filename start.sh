@@ -28,6 +28,10 @@ if [ ! -f "${SERVER_DIR}/eula.txt" ]; then
     # ops.json — empty by default, user can edit via File Manager
     echo "[]" > "${SERVER_DIR}/ops.json"
     echo "[]" > "${SERVER_DIR}/whitelist.json"
+
+    # Copy Geyser default config so bedrock port and auth-type are pre-configured
+    mkdir -p "${SERVER_DIR}/plugins/Geyser-Spigot"
+    cp /app/code/config/Geyser-Spigot/config.yml "${SERVER_DIR}/plugins/Geyser-Spigot/config.yml"
 fi
 
 chown -R cloudron:cloudron "${SERVER_DIR}"
@@ -76,6 +80,15 @@ service cron start || true
 if [ -n "${MINECRAFT_PORT:-}" ]; then
     sed -i "s/^server-port=.*/server-port=25565/" "${SERVER_DIR}/server.properties"
     echo "=> Minecraft port mapped: external ${MINECRAFT_PORT} -> container 25565"
+fi
+
+# ============================================================
+# Write bedrock port into Geyser config if GEYSER_PORT is set
+# ============================================================
+GEYSER_CONFIG="${SERVER_DIR}/plugins/Geyser-Spigot/config.yml"
+if [ -n "${GEYSER_PORT:-}" ] && [ -f "${GEYSER_CONFIG}" ]; then
+    sed -i "s/^  port: .*/  port: 19132/" "${GEYSER_CONFIG}"
+    echo "=> Geyser port mapped: external ${GEYSER_PORT} -> container 19132"
 fi
 
 # ============================================================
