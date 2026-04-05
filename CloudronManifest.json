@@ -1,0 +1,40 @@
+{
+  "id": "io.cloudron.papermc",
+  "title": "PaperMC Minecraft Server",
+  "author": "Benn <benn@cloudron.papermc>",
+  "description": "file://DESCRIPTION.md",
+  "changelog": "file://CHANGELOG",
+  "tagline": "High-performance Minecraft server with web console",
+  "version": "1.0.0",
+  "upstreamVersion": "1.21.11",
+  "healthCheckPath": "/",
+  "httpPort": 3000,
+  "tcpPorts": {
+    "MINECRAFT_PORT": {
+      "title": "Minecraft Server Port",
+      "description": "TCP port for Minecraft client connections",
+      "defaultValue": 25565,
+      "containerPort": 25565,
+      "enabledByDefault": true
+    }
+  },
+  "addons": {
+    "localstorage": {},
+    "oidc": {
+      "loginRedirectUri": "/auth/callback",
+      "logoutRedirectUri": "/"
+    }
+  },
+  "manifestVersion": 2,
+  "optionalSso": true,
+  "memoryLimit": 2147483648,
+  "website": "https://papermc.io",
+  "contactEmail": "support@cloudron.io",
+  "icon": "file://icon.png",
+  "tags": [
+    "games",
+    "minecraft"
+  ],
+  "postInstallMessage": "file://POSTINSTALL.md",
+  "mediaLinks": []
+}

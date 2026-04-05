@@ -1,0 +1,7 @@
+[1.0.0]
+* Initial release
+* PaperMC server with auto-update via Fill v3 API
+* Lightweight web console with live log streaming
+* Cloudron SSO (OIDC) integration
+* Kid-friendly creative mode defaults
+* Minecraft TCP port exposed via tcpPorts
