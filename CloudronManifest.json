@@ -12,9 +12,18 @@
   "tcpPorts": {
     "MINECRAFT_PORT": {
       "title": "Minecraft Server Port",
-      "description": "TCP port for Minecraft client connections",
+      "description": "TCP port for Minecraft Java Edition client connections",
       "defaultValue": 25565,
       "containerPort": 25565,
+      "enabledByDefault": true
+    }
+  },
+  "udpPorts": {
+    "GEYSER_PORT": {
+      "title": "Geyser Bedrock Port",
+      "description": "UDP port for Minecraft Bedrock Edition client connections via Geyser",
+      "defaultValue": 19132,
+      "containerPort": 19132,
       "enabledByDefault": true
     }
   },

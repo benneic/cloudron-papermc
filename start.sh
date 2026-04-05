@@ -79,6 +79,15 @@ if [ -n "${MINECRAFT_PORT:-}" ]; then
 fi
 
 # ============================================================
+# Install Geyser and Floodgate plugins
+# ============================================================
+PLUGINS_DIR="${SERVER_DIR}/plugins"
+mkdir -p "${PLUGINS_DIR}"
+chown cloudron:cloudron "${PLUGINS_DIR}"
+/app/code/scripts/install-plugins.sh "${PLUGINS_DIR}"
+chown -R cloudron:cloudron "${PLUGINS_DIR}"
+
+# ============================================================
 # Start the web panel
 # ============================================================
 echo "=> Starting web panel on port 3000"
