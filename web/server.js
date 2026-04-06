@@ -294,7 +294,7 @@ function getHTML(userName) {
 <div class="header">
   <h1><span class="icon">⛏️</span> PaperMC Server</h1>
   <div class="user">
-    ${ssoEnabled ? \`Signed in as <strong>\${userName}</strong> &middot; <a href="/auth/logout">Sign out</a>\` : ''}
+    ${ssoEnabled ? `Signed in as <strong>${userName}</strong> &middot; <a href="/auth/logout">Sign out</a>` : ''}
   </div>
 </div>
 <div class="status-bar" id="status-bar">

@@ -1,8 +1,20 @@
+FROM eclipse-temurin:25-jre-noble AS java-runtime
+
 FROM cloudron/base:5.0.0@sha256:04fd70dbd8ad6149c19de39e35718e024417c3e01dc9c6637eaf4a41ec4e596c
 
-# Install Java 21 and jq
+# Paper API lists 26.x before 1.21.x; pin so bundled Geyser/Floodgate stay compatible.
+# Override in Cloudron: PAPER_MC_VERSION=… 
+ENV PAPER_MC_VERSION=1.21.11
+# One-shot: PAPERMC_RESET_WORLD=1 deletes world saves for level-name (e.g. after MC downgrade).
+
+# PaperMC stable builds may require newer Java than distro packages; bundle Temurin JRE.
+COPY --from=java-runtime /opt/java/openjdk /opt/java/openjdk
+ENV JAVA_HOME=/opt/java/openjdk
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+# jq, curl (Java from Temurin stage above)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-21-jre-headless jq curl && \
+    apt-get install -y --no-install-recommends jq curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Node.js for the web panel

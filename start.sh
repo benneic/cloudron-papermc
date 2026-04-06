@@ -37,12 +37,10 @@ fi
 chown -R cloudron:cloudron "${SERVER_DIR}"
 
 # ============================================================
-# Download PaperMC if missing
+# PaperMC JAR — keep in sync with PAPER_MC_VERSION (see Dockerfile / Cloudron env)
 # ============================================================
-if [ ! -f "${JAR_PATH}" ]; then
-    echo "=> Downloading PaperMC..."
-    /app/code/scripts/update-paper.sh
-fi
+echo "=> PaperMC target version: ${PAPER_MC_VERSION:-1.21.11}"
+/app/code/scripts/update-paper.sh
 
 # ============================================================
 # Calculate Java memory from cgroup limits
@@ -82,21 +80,35 @@ if [ -n "${GEYSER_PORT:-}" ] && [ -f "${GEYSER_CONFIG}" ]; then
 fi
 
 # ============================================================
-# Install Geyser and Floodgate plugins
+# Optional: delete world data (incompatible level.dat after MC/Paper downgrade, etc.)
+# Set PAPERMC_RESET_WORLD=1 in Cloudron env, deploy once, then remove it.
 # ============================================================
+if [ "${PAPERMC_RESET_WORLD:-}" = "1" ] || [ "${PAPERMC_RESET_WORLD:-}" = "true" ]; then
+    if [ -f "${SERVER_DIR}/server.properties" ]; then
+        LEVEL_NAME="$(grep -E '^level-name=' "${SERVER_DIR}/server.properties" | head -1 | cut -d= -f2- | tr -d '\r')"
+        LEVEL_NAME="${LEVEL_NAME:-world}"
+        echo "=> PAPERMC_RESET_WORLD: removing saves for level-name=${LEVEL_NAME}"
+        rm -rf "${SERVER_DIR}/${LEVEL_NAME}" "${SERVER_DIR}/${LEVEL_NAME}_nether" "${SERVER_DIR}/${LEVEL_NAME}_the_end"
+    fi
+fi
+
 PLUGINS_DIR="${SERVER_DIR}/plugins"
 mkdir -p "${PLUGINS_DIR}"
 chown cloudron:cloudron "${PLUGINS_DIR}"
-/app/code/scripts/install-plugins.sh "${PLUGINS_DIR}"
-chown -R cloudron:cloudron "${PLUGINS_DIR}"
 
 # ============================================================
-# Start the web panel
+# Web panel first (Cloudron health-checks httpPort during long plugin downloads)
 # ============================================================
 echo "=> Starting web panel on port 3000"
 cd /app/code/web
-exec gosu cloudron:cloudron node server.js &
+gosu cloudron:cloudron node server.js &
 WEB_PID=$!
+
+# ============================================================
+# Install Geyser and Floodgate plugins
+# ============================================================
+/app/code/scripts/install-plugins.sh "${PLUGINS_DIR}"
+chown -R cloudron:cloudron "${PLUGINS_DIR}"
 
 # ============================================================
 # Start PaperMC

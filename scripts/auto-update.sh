@@ -7,21 +7,12 @@ JAR_PATH="${SERVER_DIR}/paper.jar"
 BUILD_FILE="${SERVER_DIR}/.paper-build"
 USER_AGENT="cloudron-papermc/1.0.0 (https://github.com/benneic/cloudron-papermc)"
 
-echo "[auto-update] $(date) — Checking for PaperMC updates..."
+TARGET_VERSION="${PAPER_MC_VERSION:-1.21.11}"
 
-# Get latest version
-LATEST_VERSION=$(curl -sf -H "User-Agent: ${USER_AGENT}" \
-    "https://fill.papermc.io/v3/projects/${PROJECT}" | \
-    jq -r '.versions | to_entries[0] | .value[0]' 2>/dev/null || echo "")
+echo "[auto-update] $(date) — Checking PaperMC ${TARGET_VERSION} for updates..."
 
-if [ -z "${LATEST_VERSION}" ] || [ "${LATEST_VERSION}" = "null" ]; then
-    echo "[auto-update] Could not fetch latest version, skipping"
-    exit 0
-fi
-
-# Get latest stable build
 BUILDS_RESPONSE=$(curl -sf -H "User-Agent: ${USER_AGENT}" \
-    "https://fill.papermc.io/v3/projects/${PROJECT}/versions/${LATEST_VERSION}/builds" 2>/dev/null || echo "")
+    "https://fill.papermc.io/v3/projects/${PROJECT}/versions/${TARGET_VERSION}/builds" 2>/dev/null || echo "")
 
 if [ -z "${BUILDS_RESPONSE}" ]; then
     echo "[auto-update] Could not fetch builds, skipping"
@@ -32,7 +23,7 @@ LATEST_BUILD=$(echo "${BUILDS_RESPONSE}" | \
     jq -r 'map(select(.channel == "STABLE")) | .[0] | .id' 2>/dev/null || echo "null")
 
 if [ "${LATEST_BUILD}" = "null" ] || [ -z "${LATEST_BUILD}" ]; then
-    echo "[auto-update] No stable build found, skipping"
+    echo "[auto-update] No stable build found for ${TARGET_VERSION}, skipping"
     exit 0
 fi
 
@@ -42,7 +33,7 @@ if [ -f "${BUILD_FILE}" ]; then
     CURRENT_BUILD=$(cat "${BUILD_FILE}")
 fi
 
-NEW_BUILD_ID="${LATEST_VERSION}-${LATEST_BUILD}"
+NEW_BUILD_ID="${TARGET_VERSION}-${LATEST_BUILD}"
 
 if [ "${CURRENT_BUILD}" = "${NEW_BUILD_ID}" ]; then
     echo "[auto-update] Already on latest (${NEW_BUILD_ID}), nothing to do"
@@ -90,6 +81,10 @@ fi
 mv "${JAR_PATH}.new" "${JAR_PATH}"
 echo "${NEW_BUILD_ID}" > "${BUILD_FILE}"
 chown cloudron:cloudron "${JAR_PATH}" "${BUILD_FILE}"
+
+# Match Bedrock plugins to new Paper (avoids Geyser/Floodgate API drift)
+/app/code/scripts/install-plugins.sh "${SERVER_DIR}/plugins"
+chown -R cloudron:cloudron "${SERVER_DIR}/plugins" 2>/dev/null || true
 
 echo "[auto-update] Updated to ${NEW_BUILD_ID}. Restarting server..."
 
