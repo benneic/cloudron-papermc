@@ -4,12 +4,13 @@ Cloudron app package for [PaperMC](https://papermc.io/) — a high-performance M
 
 ## Features
 
-- **PaperMC Server** with automatic updates via the [Fill v3 API](https://docs.papermc.io/misc/downloads-service/)
-- **Lightweight Web Console** — live log streaming, server status, and build info
-- **Cloudron SSO** — OIDC-based authentication for the web panel
-- **Kid-Friendly Defaults** — creative mode, peaceful difficulty, PvP off, whitelist enabled
-- **Minecraft TCP Port** — exposed via Cloudron's `tcpPorts` manifest (configurable in the UI)
-- **Persistent Data** — worlds, configs, and plugins stored in `/app/data/server/` (backed up by Cloudron)
+- **PaperMC** — pinned by default to a stable Minecraft line compatible with bundled Bedrock plugins (see [Paper version](#paper-version) below); updates use the [Fill v3 API](https://docs.papermc.io/misc/downloads-service/)
+- **Geyser + Floodgate** — [Geyser](https://geysermc.org/) lets **Bedrock** clients join the same world as **Java** players; [Floodgate](https://wiki.geysermc.org/floodgate/) allows Bedrock logins without a separate Java/Microsoft account (see [Bedrock (Geyser)](#bedrock-geyser))
+- **Lightweight web console** — live log streaming, server status, and build info
+- **Cloudron SSO** — OIDC-based authentication for the web panel (`optionalSso`)
+- **Kid-friendly defaults** — creative mode, peaceful difficulty, PvP off, whitelist enabled
+- **Ports** — Java Edition **TCP** (`MINECRAFT_PORT` → container `25565`) and Bedrock **UDP** (`GEYSER_PORT` → container `19132`) via the Cloudron manifest
+- **Persistent data** — worlds, configs, and plugins under `/app/data/server/` (Cloudron `localstorage` backups)
 
 ## Installation
 
@@ -29,64 +30,90 @@ cloudron install --image <your-registry>/cloudron-papermc:latest
 
 ## Configuration
 
-After installation, server files can be edited via the **Cloudron File Manager** at `/app/data/server/`:
+### Files (File Manager: `/app/data/server/`)
 
-| File | Purpose |
+| Path | Purpose |
 |------|---------|
 | `server.properties` | Main server configuration |
 | `whitelist.json` | Allowed players |
 | `ops.json` | Server operators |
 | `spigot.yml` | Spigot-layer settings |
 | `bukkit.yml` | Bukkit-layer settings |
+| `plugins/Geyser-Spigot/config.yml` | Geyser (Bedrock) — port, MOTD, `auth-type`, etc. |
 
-## Default Settings (Kid-Friendly)
+Additional plugins and jars can be added under `plugins/` like any Paper server.
+
+### Environment variables (Cloudron app settings)
+
+| Variable | Purpose |
+|----------|---------|
+| `PAPER_MC_VERSION` | Minecraft version string for Paper (default **`1.21.11`**, set in the Dockerfile). The updater and six-hour scheduler only fetch builds for this line. Override if you intentionally want another Paper branch (for example when Bedrock plugins support a newer line). |
+| `PAPERMC_RESET_WORLD` | Set to **`1`** or **`true`** for **one** deploy/restart to delete the world folders for `level-name` in `server.properties` (default `world`, plus `_nether` / `_the_end` if present). Use after an incompatible downgrade or a corrupt `level.dat`, then **remove** the variable so worlds are not wiped every boot. |
+
+Cloudron also injects `MINECRAFT_PORT`, `GEYSER_PORT`, and OIDC-related variables as defined in `CloudronManifest.json`.
+
+### Paper version
+
+Paper’s API lists multiple major lines (for example **26.x** and **1.21.x**). This package **does not** follow “whatever is first in the API”, because **Geyser/Floodgate** often lag the newest Paper builds. The default pin matches `upstreamVersion` in the manifest. To move to a newer Minecraft line later, set `PAPER_MC_VERSION` to that version and confirm [Geyser](https://geysermc.org/download) supports it.
+
+### Bedrock (Geyser)
+
+On first start, the app installs **Geyser-Spigot** and **floodgate-spigot** from the official download API (see [`scripts/install-plugins.sh`](scripts/install-plugins.sh)). Those jars are **refreshed** when the Paper build id in `/app/data/server/.paper-build` changes (for example after an update), so they stay aligned with the server.
+
+Default Geyser config uses **`auth-type: floodgate`** so Bedrock players can join via Floodgate; Java players still use normal online-mode authentication as in `server.properties`. Expose **UDP** for Bedrock in the Cloudron app (manifest `GEYSER_PORT`); the container listens on **19132** inside the network namespace.
+
+## Default settings (kid-friendly)
 
 | Setting | Value |
 |---------|-------|
-| Game Mode | Creative |
+| Game mode | Creative |
 | Difficulty | Peaceful |
 | PvP | Disabled |
 | Whitelist | Enabled |
-| Max Players | 10 |
-| Spawn Protection | 16 blocks |
-| Online Mode | Enabled |
-| Max World Size | 10,000 blocks |
-| Player Idle Timeout | 30 minutes |
+| Max players | 10 |
+| Spawn protection | 16 blocks |
+| Online mode | Enabled (Java) |
+| Max world size | 10,000 blocks |
+| Player idle timeout | 30 minutes |
 
-## Auto-Updates
+## Auto-updates
 
-The Cloudron **scheduler** addon (declared in the app manifest) runs [`scripts/auto-update.sh`](scripts/auto-update.sh) every 6 hours to check for new PaperMC builds via the Fill v3 API. When a new stable build is found:
+The Cloudron **scheduler** addon runs [`scripts/auto-update.sh`](scripts/auto-update.sh) every six hours. It checks Fill for a **new stable build of `PAPER_MC_VERSION`**, then:
 
-1. The new jar is downloaded
-2. The Minecraft server is gracefully stopped
-3. The jar is swapped
-4. The server restarts automatically
+1. Downloads the new jar  
+2. Stops the Minecraft process gracefully  
+3. Swaps the jar and updates `.paper-build`  
+4. Re-runs plugin install logic so Geyser/Floodgate stay in sync  
+5. Restarts the Minecraft process  
 
-Output is appended to `/app/data/papermc-update.log` and also appears in the app’s Cloudron logs.
+Logs: `/app/data/papermc-update.log` and the app’s Cloudron logs.
+
+## Runtime stack
+
+- **Java:** Eclipse Temurin **25** JRE (Paper and recent builds may require a current class file version).  
+- **Web panel:** Node.js (see `Dockerfile`).  
+- **Processes:** `start.sh` brings up the web panel first (for Cloudron health checks), then ensures plugins, then starts Paper.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│  Cloudron Container                     │
-│                                         │
-│  ┌──────────────┐  ┌────────────────┐  │
-│  │ Web Panel     │  │ PaperMC Server │  │
-│  │ (Node.js)     │  │ (Java 21)      │  │
-│  │ Port 3000     │  │ Port 25565     │  │
-│  │ ─ SSO/OIDC    │  │ ─ Minecraft    │  │
-│  │ ─ Log viewer  │  │   protocol     │  │
-│  │ ─ Status API  │  │                │  │
-│  └──────┬───────┘  └───────┬────────┘  │
-│         │  WebSocket        │           │
-│         │  (tail logs)      │           │
-│         └──────────┬────────┘           │
-│                    │                    │
-│         ┌──────────┴────────┐           │
-│         │  /app/data/server │           │
-│         │  (localstorage)   │           │
-│         └───────────────────┘           │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Cloudron container                                          │
+│                                                              │
+│  ┌────────────────┐  ┌─────────────────────────────────┐  │
+│  │ Web panel       │  │ PaperMC + plugins               │  │
+│  │ Node.js :3000   │  │ Java 25 — Geyser + Floodgate    │  │
+│  │ SSO / logs /    │  │ TCP :25565 — Minecraft Java     │  │
+│  │ status API      │  │ UDP :19132 — Minecraft Bedrock  │  │
+│  └────────┬───────┘  └──────────────────┬──────────────┘  │
+│           │                             │                  │
+│           └──────────────┬──────────────┘                  │
+│                          │                                 │
+│                ┌─────────▼─────────┐                       │
+│                │ /app/data/server  │                       │
+│                │ (localstorage)    │                       │
+│                └───────────────────┘                       │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## License
