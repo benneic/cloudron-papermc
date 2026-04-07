@@ -5,7 +5,6 @@ FROM cloudron/base:5.0.0@sha256:04fd70dbd8ad6149c19de39e35718e024417c3e01dc9c663
 # Paper API lists 26.x before 1.21.x; pin so bundled Geyser/Floodgate stay compatible.
 # Override in Cloudron: PAPER_MC_VERSION=… 
 ENV PAPER_MC_VERSION=1.21.11
-# One-shot: PAPERMC_RESET_WORLD=1 deletes world saves for level-name (e.g. after MC downgrade).
 
 # PaperMC stable builds may require newer Java than distro packages; bundle Temurin JRE.
 COPY --from=java-runtime /opt/java/openjdk /opt/java/openjdk

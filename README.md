@@ -48,7 +48,6 @@ Additional plugins and jars can be added under `plugins/` like any Paper server.
 | Variable | Purpose |
 |----------|---------|
 | `PAPER_MC_VERSION` | Minecraft version string for Paper (default **`1.21.11`**, set in the Dockerfile). The updater and six-hour scheduler only fetch builds for this line. Override if you intentionally want another Paper branch (for example when Bedrock plugins support a newer line). |
-| `PAPERMC_RESET_WORLD` | Set to **`1`** or **`true`** for **one** deploy/restart to delete the world folders for `level-name` in `server.properties` (default `world`, plus `_nether` / `_the_end` if present). Use after an incompatible downgrade or a corrupt `level.dat`, then **remove** the variable so worlds are not wiped every boot. |
 
 Cloudron also injects `MINECRAFT_PORT`, `GEYSER_PORT`, and OIDC-related variables as defined in `CloudronManifest.json`.
 

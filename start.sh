@@ -79,19 +79,6 @@ if [ -n "${GEYSER_PORT:-}" ] && [ -f "${GEYSER_CONFIG}" ]; then
     echo "=> Geyser port mapped: external ${GEYSER_PORT} -> container 19132"
 fi
 
-# ============================================================
-# Optional: delete world data (incompatible level.dat after MC/Paper downgrade, etc.)
-# Set PAPERMC_RESET_WORLD=1 in Cloudron env, deploy once, then remove it.
-# ============================================================
-if [ "${PAPERMC_RESET_WORLD:-}" = "1" ] || [ "${PAPERMC_RESET_WORLD:-}" = "true" ]; then
-    if [ -f "${SERVER_DIR}/server.properties" ]; then
-        LEVEL_NAME="$(grep -E '^level-name=' "${SERVER_DIR}/server.properties" | head -1 | cut -d= -f2- | tr -d '\r')"
-        LEVEL_NAME="${LEVEL_NAME:-world}"
-        echo "=> PAPERMC_RESET_WORLD: removing saves for level-name=${LEVEL_NAME}"
-        rm -rf "${SERVER_DIR}/${LEVEL_NAME}" "${SERVER_DIR}/${LEVEL_NAME}_nether" "${SERVER_DIR}/${LEVEL_NAME}_the_end"
-    fi
-fi
-
 PLUGINS_DIR="${SERVER_DIR}/plugins"
 mkdir -p "${PLUGINS_DIR}"
 chown cloudron:cloudron "${PLUGINS_DIR}"
